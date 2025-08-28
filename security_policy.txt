@@ -1,0 +1,248 @@
+# Security Policy
+
+## 🔒 Our Commitment to Security
+
+AppGenius AI Builder takes security seriously. We appreciate the security community's efforts to responsibly disclose vulnerabilities and work with us to protect our users.
+
+## 🛡️ Supported Versions
+
+We provide security updates for the following versions:
+
+| Version | Supported          |
+| ------- | ------------------ |
+| 1.x.x   | ✅ Yes             |
+| < 1.0   | ❌ No              |
+
+## 🚨 Reporting a Vulnerability
+
+### Please DO NOT report security vulnerabilities through public GitHub issues.
+
+Instead, please report security vulnerabilities to us via:
+
+**Primary Contact:**
+- Email: security@appgenius.ai
+- Subject Line: `[SECURITY] Brief Description`
+
+**Secondary Contact:**
+- Email: admin@appgenius.ai
+
+### What to Include
+
+Please include the following information in your report:
+
+1. **Description**: A clear description of the vulnerability
+2. **Steps to Reproduce**: Detailed steps to reproduce the issue
+3. **Impact**: Your assessment of the potential impact
+4. **Affected Components**: Which parts of the system are affected
+5. **Proof of Concept**: If possible, include a proof of concept
+6. **Suggested Fix**: If you have suggestions for fixing the issue
+
+### Response Timeline
+
+- **Acknowledgment**: Within 24 hours
+- **Initial Assessment**: Within 72 hours
+- **Regular Updates**: Every 7 days until resolved
+- **Resolution**: Target 30 days for critical issues, 90 days for others
+
+## 🔍 Security Measures in Place
+
+### Authentication & Authorization
+- OAuth 2.0 with Google, GitHub
+- JWT sessions with secure cookies
+- Role-based access control (RBAC)
+- Session timeout and rotation
+- Multi-factor authentication support
+
+### Data Protection
+- API keys encrypted with AES-256-GCM
+- Database connections over TLS
+- Sensitive data hashing with bcrypt
+- Input validation and sanitization
+- SQL injection prevention with Prisma ORM
+
+### Infrastructure Security
+- HTTPS enforcement
+- Security headers (CSP, HSTS, X-Frame-Options)
+- Rate limiting on API endpoints
+- CORS configuration
+- Regular dependency updates
+
+### Application Security
+- XSS prevention
+- CSRF protection
+- Content Security Policy
+- Secure error handling (no sensitive data leakage)
+- File upload restrictions and validation
+
+## 🛠️ Security Testing
+
+We regularly perform:
+- Static Application Security Testing (SAST)
+- Dynamic Application Security Testing (DAST)
+- Dependency vulnerability scanning
+- Penetration testing
+- Code reviews with security focus
+
+## 📋 Security Checklist for Contributors
+
+When contributing to AppGenius AI Builder, please ensure:
+
+### Input Validation
+- [ ] All user inputs are validated and sanitized
+- [ ] File uploads are restricted and validated
+- [ ] API parameters are validated with Zod schemas
+- [ ] SQL queries use parameterized statements
+
+### Authentication & Authorization
+- [ ] Protected routes require authentication
+- [ ] User permissions are checked for sensitive operations
+- [ ] Sessions are properly managed and expired
+- [ ] Rate limiting is implemented where appropriate
+
+### Data Handling
+- [ ] Sensitive data is properly encrypted
+- [ ] Secrets are not hardcoded in source code
+- [ ] Environment variables are used for configuration
+- [ ] Database migrations handle sensitive data properly
+
+### Error Handling
+- [ ] Errors don't expose sensitive information
+- [ ] Stack traces are not shown to end users
+- [ ] Logging doesn't include sensitive data
+- [ ] Proper HTTP status codes are used
+
+## 🔐 Environment Security
+
+### Development Environment
+```bash
+# Use strong, unique secrets
+NEXTAUTH_SECRET="use-a-strong-random-string-32-chars-min"
+ENCRYPTION_KEY="32-character-encryption-key-required"
+
+# Never commit real credentials
+CEREBRAS_API_KEY="your-api-key-here"
+DATABASE_URL="postgresql://user:pass@localhost:5432/db"
+```
+
+### Production Environment
+- Use managed services for databases (Neon, Supabase)
+- Enable database encryption at rest
+- Use secrets management (Vercel Environment Variables)
+- Enable monitoring and alerting
+- Regular security updates
+
+## 🚫 Security Don'ts
+
+### Never Do These Things:
+- Store API keys in source code
+- Use weak or default passwords
+- Disable security features for "convenience"
+- Trust user input without validation
+- Log sensitive information
+- Use HTTP in production
+- Ignore security warnings from tools
+
+### Example of What NOT to Do:
+```javascript
+// ❌ BAD - Hardcoded API key
+const apiKey = "sk-1234567890abcdef";
+
+// ❌ BAD - No input validation  
+app.post('/api/user', (req, res) => {
+  const sql = `INSERT INTO users (email) VALUES ('${req.body.email}')`;
+  // This is vulnerable to SQL injection
+});
+
+// ❌ BAD - Sensitive data in logs
+console.log('User logged in:', { password: user.password });
+```
+
+### Example of What TO Do:
+```javascript
+// ✅ GOOD - Environment variable
+const apiKey = process.env.CEREBRAS_API_KEY;
+
+// ✅ GOOD - Parameterized query with validation
+const userSchema = z.object({
+  email: z.string().email()
+});
+
+app.post('/api/user', async (req, res) => {
+  const { email } = userSchema.parse(req.body);
+  await prisma.user.create({ data: { email } });
+});
+
+// ✅ GOOD - Safe logging
+console.log('User logged in:', { userId: user.id, timestamp: new Date() });
+```
+
+## 🔄 Security Update Process
+
+### For Critical Vulnerabilities:
+1. **Immediate**: Create private patch
+2. **Within 24h**: Deploy to production
+3. **Within 48h**: Notify affected users
+4. **Within 72h**: Public disclosure with fix
+
+### For Non-Critical Vulnerabilities:
+1. **Within 7 days**: Create patch
+2. **Within 14 days**: Deploy to production  
+3. **Within 30 days**: Public disclosure
+
+## 🏆 Security Recognition
+
+We believe in recognizing security researchers who help make AppGenius AI Builder more secure:
+
+### Hall of Fame
+We maintain a security researchers hall of fame for those who have contributed to our security.
+
+### Rewards
+While we don't currently offer monetary rewards, we do provide:
+- Public recognition (with permission)
+- Swag and merchandise
+- Direct communication with our engineering team
+- Early access to new features
+
+## 📞 Emergency Contact
+
+For urgent security issues that require immediate attention:
+
+**Emergency Email**: emergency@appgenius.ai
+**Subject**: `[URGENT SECURITY] Brief Description`
+
+Please use this only for:
+- Active attacks in progress
+- Data breaches
+- Critical vulnerabilities being exploited
+
+## 🔗 Additional Resources
+
+### Security Tools We Recommend:
+- **OWASP ZAP**: Web application security scanner
+- **npm audit**: Node.js dependency vulnerability scanner
+- **Snyk**: Dependency and container vulnerability scanning
+- **ESLint Security**: JavaScript security linting rules
+
+### Security Learning Resources:
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+- [OWASP Web Security Testing Guide](https://owasp.org/www-project-web-security-testing-guide/)
+- [Node.js Security Checklist](https://blog.risingstack.com/node-js-security-checklist/)
+- [Next.js Security Headers](https://nextjs.org/docs/advanced-features/security-headers)
+
+## 📄 Legal
+
+By reporting a vulnerability to us, you agree to:
+- Provide reasonable time to address the issue before public disclosure
+- Not access or modify user data without explicit permission
+- Not perform attacks that could harm the availability of our services
+- Act in good faith and avoid privacy violations or destruction of data
+
+We commit to:
+- Not pursue legal action against security researchers who follow this policy
+- Work with you to understand and address the issue
+- Credit you for the discovery (if desired)
+- Keep you informed about the progress of fixing the issue
+
+---
+
+**Remember**: The security of AppGenius AI Builder depends on all of us. Thank you for helping keep our platform and users safe! 🔒✨

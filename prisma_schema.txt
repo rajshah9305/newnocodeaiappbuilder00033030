@@ -1,0 +1,211 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  bio           String?
+  plan          String    @default("free")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts         Account[]
+  sessions         Session[]
+  projects         Project[]
+  teamMemberships  TeamMember[]
+  apiKeys          ApiKey[]
+  notifications    NotificationSettings?
+  analytics        UserAnalytics?
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  prompt      String   @db.Text
+  status      String   @default("draft") // draft, building, deployed, error
+  framework   String   @default("react")
+  category    String   @default("web")
+  deployUrl   String?
+  repository  String?
+  thumbnail   String?
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  agents     AgentExecution[]
+  codeFiles  CodeFile[]
+  analytics  ProjectAnalytics?
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  category    String
+  framework   String
+  image       String?
+  premium     Boolean  @default(false)
+  price       String   @default("Free")
+  features    String[] @default([])
+  downloads   Int      @default(0)
+  rating      Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  codeFiles CodeFile[]
+}
+
+model AgentExecution {
+  id          String   @id @default(cuid())
+  agentId     String   // orchestrator, ui, backend, database, tester, deployment
+  agentName   String
+  status      String   @default("pending") // pending, active, completed, error
+  progress    Int      @default(0)
+  output      String?  @db.Text
+  error       String?  @db.Text
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  duration    Int?     // in seconds
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model CodeFile {
+  id       String @id @default(cuid())
+  filename String
+  content  String @db.Text
+  language String
+  agent    String // which agent generated this file
+
+  projectId  String?
+  project    Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  templateId String?
+  template   Template? @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members TeamMember[]
+}
+
+model TeamMember {
+  id     String @id @default(cuid())
+  role   String @default("member") // owner, admin, member, viewer
+  status String @default("active") // active, inactive, pending
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  joinedAt DateTime @default(now())
+
+  @@unique([userId, teamId])
+}
+
+model ApiKey {
+  id        String   @id @default(cuid())
+  name      String
+  service   String   // cerebras, openai, etc.
+  keyHash   String   // encrypted API key
+  createdAt DateTime @default(now())
+  lastUsed  DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model NotificationSettings {
+  id          String  @id @default(cuid())
+  email       Boolean @default(true)
+  deployment  Boolean @default(true)
+  team        Boolean @default(false)
+  marketing   Boolean @default(false)
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserAnalytics {
+  id              String @id @default(cuid())
+  totalProjects   Int    @default(0)
+  totalViews      Int    @default(0)
+  totalDownloads  Int    @default(0)
+  activeProjects  Int    @default(0)
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ProjectAnalytics {
+  id             String    @id @default(cuid())
+  views          Int       @default(0)
+  uniqueVisitors Int       @default(0)
+  deployments    Int       @default(0)
+  lastDeployed   DateTime?
+  buildTime      Int?      // in seconds
+  errorCount     Int       @default(0)
+
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
